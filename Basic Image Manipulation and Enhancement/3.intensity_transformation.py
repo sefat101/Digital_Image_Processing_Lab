@@ -22,6 +22,7 @@ log_transformed = np.array(log_transformed,
 
 # -------------------------------
 # 3. Gamma Transformation
+#pip install opencv-python
 # -------------------------------
 
 gamma = 0.5
