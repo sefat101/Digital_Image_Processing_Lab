@@ -1,44 +1,91 @@
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 
-# Read the image in grayscale
+# Read grayscale image
 img = cv2.imread("meow.jpeg", 0)
 
-# Check if image is loaded
 if img is None:
-    print("Error: Image not found!")
+    print("Image not found!")
     exit()
 
-# Histogram Equalization
-equalized = cv2.equalizeHist(img)
+# Image size
+rows, cols = img.shape
+total_pixels = rows * cols
 
-# Create a 2x2 subplot
+# -----------------------------
+# Step 1: Calculate Histogram
+# -----------------------------
+hist = np.zeros(256, dtype=int)
+
+for i in range(rows):
+    for j in range(cols):
+        hist[img[i, j]] += 1
+
+# -----------------------------
+# Step 2: Calculate PDF
+# -----------------------------
+pdf = hist / total_pixels
+
+# -----------------------------
+# Step 3: Calculate CDF
+# -----------------------------
+cdf = np.zeros(256)
+
+cdf[0] = pdf[0]
+
+for i in range(1, 256):
+    cdf[i] = cdf[i - 1] + pdf[i]
+
+# -----------------------------
+# Step 4: Create Transformation
+# -----------------------------
+transform = np.round(cdf * 255).astype(np.uint8)
+
+# -----------------------------
+# Step 5: Generate Equalized Image
+# -----------------------------
+equalized = np.zeros_like(img)
+
+for i in range(rows):
+    for j in range(cols):
+        equalized[i, j] = transform[img[i, j]]
+
+# -----------------------------
+# Display Results
+# -----------------------------
 plt.figure(figsize=(10, 8))
 
-# 1. Input Image
+# Input Image
 plt.subplot(2, 2, 1)
 plt.imshow(img, cmap='gray')
 plt.title("Input Image")
 plt.axis("off")
 
-# 2. Output Image
+# Output Image
 plt.subplot(2, 2, 2)
 plt.imshow(equalized, cmap='gray')
-plt.title("Output Image")
+plt.title("Equalized Image")
 plt.axis("off")
 
-# 3. Histogram Before Processing
+# Histogram Before
 plt.subplot(2, 2, 3)
-plt.hist(img.ravel(), bins=256, range=[0, 256], color='blue')
-plt.title("Histogram Before Processing")
-plt.xlabel("Pixel Intensity")
+plt.bar(range(256), hist, color='blue')
+plt.title("Histogram Before")
+plt.xlabel("Gray Level")
 plt.ylabel("Frequency")
 
-# 4. Histogram After Processing
+# Histogram After
+hist_eq = np.zeros(256, dtype=int)
+
+for i in range(rows):
+    for j in range(cols):
+        hist_eq[equalized[i, j]] += 1
+
 plt.subplot(2, 2, 4)
-plt.hist(equalized.ravel(), bins=256, range=[0, 256], color='green')
-plt.title("Histogram After Processing")
-plt.xlabel("Pixel Intensity")
+plt.bar(range(256), hist_eq, color='green')
+plt.title("Histogram After")
+plt.xlabel("Gray Level")
 plt.ylabel("Frequency")
 
 plt.tight_layout()
